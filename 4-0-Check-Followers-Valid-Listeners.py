@@ -1,9 +1,18 @@
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+import pandas as pd
+import os
+
+load_dotenv()
+
+print(os.getenv('test'))
+quit()
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-import pandas as pd
 
 print("Loading all Ryan Carson Followers----")
 # file_path = 'Data/ryan-carson-followers-124494.json'
