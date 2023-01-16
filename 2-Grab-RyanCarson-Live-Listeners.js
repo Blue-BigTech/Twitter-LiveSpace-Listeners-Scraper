@@ -15,7 +15,9 @@ const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 var Link = fs.readFileSync("live-link.txt");
 var spaceLink = Link.toString();
-var finalset = [];
+const getValidListeners = require('./utils')
+
+var StoreListenersData = [];
 console.log("Scraper run with headless mode");
 (async () => {
   const browser = await puppeteer.launch({
@@ -40,19 +42,18 @@ console.log("Scraper run with headless mode");
         )
     ) {
       try {
-        var target_profile_url = request.url();
-        var crftoken = request.headers();
+        var ListeningSpaceUrl = request.url();
+        var RequestHeaders = request.headers();
+        var AuthorizationToken = RequestHeaders.authorization;
+        var Csrftoken = RequestHeaders["x-csrf-token"];
 
-        var auth = crftoken.authorization;
-        token = crftoken["x-csrf-token"];
-
-        if (auth.length > 0) {
-          var crf = await page.evaluate(() => {
-            var data = document.cookie;
-            return data;
+        if (AuthorizationToken.length > 0) {
+          var pageCookies = await page.evaluate(() => {
+            var cookieString = document.cookie;
+            return cookieString;
           });
 
-          var parsed = await fetch(target_profile_url, {
+          var parsed = await fetch(ListeningSpaceUrl, {
             headers: {
               accept: "*/*",
               "access-control-request-headers":
@@ -60,7 +61,7 @@ console.log("Scraper run with headless mode");
               "access-control-request-method": "GET",
               origin: " https://twitter.com",
               "accept-language": "en-US,en;q=0.9",
-              authorization: auth,
+              authorization: AuthorizationToken,
               "content-type": "application/json",
               "sec-ch-ua":
                 '"Not?A_Brand";v="8", "Chromium";v="108", "Google Chrome";v="108"',
@@ -69,50 +70,58 @@ console.log("Scraper run with headless mode");
               "sec-fetch-dest": "empty",
               "sec-fetch-mode": "cors",
               "sec-fetch-site": "same-site",
-              "x-csrf-token": token,
-              cookie: crf,
+              "x-csrf-token": Csrftoken,
+              cookie: pageCookies,
               Referer: "https://twitter.com/",
             },
             body: null,
             method: "GET",
           })
-            .then((response) => response.json())
-            .then((data) => {
-              return data;
-            });
+            .then((response) => response.json()).then((data) => { return data; });
 
-          var listOfusers = parsed.data.audioSpace.participants.listeners;
-          if (listOfusers.length > 1) {
-            var creatorName =
-              parsed.data.audioSpace.metadata.creator_results.result.legacy
-                .name;
+          var ListenersList = parsed.data.audioSpace.participants.listeners;
+          var TotalInSpace = parsed.data.audioSpace.participants.total;
+          if (ListenersList.length > 1) {
+            var HostName = parsed.data.audioSpace.metadata.creator_results.result.legacy.name;
+            var TotalListeners = ListenersList.length;
 
-            var len = listOfusers.length;
-            console.log(
-              `> [${creatorName}] Space - (${len}) Listeners listening now`
-            );
-            for (let items = 0; items < len; items++) {
-              const profile_name =
-                parsed.data.audioSpace.participants.listeners[items]
-                  .display_name;
-              const username =
-                parsed.data.audioSpace.participants.listeners[items]
-                  .twitter_screen_name;
-              finalset.push({
-                creatorName: creatorName,
-                profile_url: `https://twitter.com/${username}`,
-                profile_name: profile_name,
-                username: "@" + username,
+            for (let items = 0; items < TotalListeners; items++) {
+              const ListenerName = parsed.data.audioSpace.participants.listeners[items].display_name;
+              const TwitterHandle = parsed.data.audioSpace.participants.listeners[items].twitter_screen_name;
+              StoreListenersData.push({
+                creatorName: HostName,
+                profile_url: `https://twitter.com/${TwitterHandle}`,
+                profile_name: ListenerName,
+                username: "@" + TwitterHandle,
               });
             }
 
-            var dataset = _.uniqBy(finalset, "profile_url");
+            var dataset = _.uniqBy(StoreListenersData, "profile_url");
+            var SpaceListeners = [];
 
+            if (dataset.length != TotalInSpace) {
+              var pos = 0;
+              pos = getValidListeners.calcPos(TotalInSpace, dataset.length);
+              SpaceListeners = getValidListeners.checkValid(dataset, pos);
+            }
+            else {
+              SpaceListeners = dataset;
+            }
+
+            console.log(`> [${HostName}] Space - (${TotalListeners}) Listeners listening now`);
             console.log(
-              `> [${creatorName}] Space - (${dataset.length}) Listeners listed to file`
+              `> [${HostName}] Space - (${SpaceListeners.length}) Listeners listed to file`
             );
 
-            fs.writeFileSync("Data/grabbed-live-listeners-List.json", JSON.stringify(dataset));
+            var FolderName = "Data";
+            if (!fs.existsSync(FolderName)) {
+              fs.mkdirSync(FolderName);
+            }
+
+            fs.writeFileSync(
+              "Data/grabbed-live-listeners-List.json",
+              JSON.stringify(SpaceListeners)
+            );
           }
         }
       } catch (error) {
@@ -156,7 +165,7 @@ console.log("Scraper run with headless mode");
     await browser.close();
   }
 
-  var dataset = _.uniqBy(finalset, "profile_url");
+  var dataset = _.uniqBy(StoreListenersData, "profile_url");
   console.log(dataset.length + " Listeners listed");
   await browser.close();
 })();

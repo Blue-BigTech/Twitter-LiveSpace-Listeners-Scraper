@@ -27,7 +27,10 @@ def getHTMLdocument(url):
 def getHTMLDocumentbyWebDriver(url):
   browser.get(url)
   tweet_3rd_elem_xpath = '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div[3]/div/div/section/div/div/div[1]'
-  wait.until(EC.presence_of_element_located((By.XPATH, tweet_3rd_elem_xpath)))
+  try:
+    wait.until(EC.presence_of_element_located((By.XPATH, tweet_3rd_elem_xpath)))
+  except:
+    print ("No Element")
   return browser.page_source
 
 def fixJson(path):
