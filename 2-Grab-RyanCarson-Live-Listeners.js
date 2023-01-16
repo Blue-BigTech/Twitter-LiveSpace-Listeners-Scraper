@@ -17,7 +17,6 @@ var Link = fs.readFileSync("live-link.txt");
 var spaceLink = Link.toString();
 var finalset = [];
 console.log("Scraper run with headless mode");
-console.log(" ");
 (async () => {
   const browser = await puppeteer.launch({
     executablePath: Chrome_Browser_PATH,
