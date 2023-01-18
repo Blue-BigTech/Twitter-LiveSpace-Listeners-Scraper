@@ -38,7 +38,7 @@ console.log("Scraper run with headless mode");
       request
         .url()
         .includes(
-          "https://api.twitter.com/graphql/r8DsX1VGH5RQOQnJBdiPLA/AudioSpaceById?variables"
+          "https://api.twitter.com/graphql/iHxorsuwbp4tXNaOy2iUSA/AudioSpaceById?variables"
         )
     ) {
       try {
