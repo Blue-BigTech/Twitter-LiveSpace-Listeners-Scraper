@@ -75,13 +75,12 @@ for person in data_json.iterrows():
   # print(profile_url)
   html_doc = getHTMLDocumentbyWebDriver(profile_url)
   # writeTxt(html_doc)
-  if cnt == 10:
-    break
   if html_doc.find('daily dose') != -1 or html_doc.find('#dailydose') != -1 or html_doc.find('ryan carson') != -1 or html_doc.find('ryancarson') != -1:
-    valid += 1
-    index = data_json['profile_url'] == profile_url
-    listener_json.loc[len(listener_json)] = ["Ryan Carson", profile_url, "", username]
-    print(profile_url)
+    if valid < 516:
+      valid += 1
+      index = data_json['profile_url'] == profile_url
+      listener_json.loc[len(listener_json)] = ["Ryan Carson", profile_url, ""]
+      print(profile_url)
 
   print('Valid : ', valid)
   # if cnt == 10:
